@@ -7,11 +7,15 @@ type Props = {
   open: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  // Suppress the built-in "Close" PillButton. Use when the modal body
+  // renders its own action row (e.g. Save / Cancel) so we don't end up
+  // with two close-style buttons stacked.
+  hideFooter?: boolean;
 };
 
 // Backdrop-clickable modal. Closes on Esc as well. Body scroll is locked
 // while open so the page underneath doesn't drift on mobile.
-export function Modal({ open, onClose, children }: Props) {
+export function Modal({ open, onClose, children, hideFooter = false }: Props) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -40,11 +44,13 @@ export function Modal({ open, onClose, children }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         {children}
-        <div className="mt-6 text-right">
-          <PillButton variant="secondary" onClick={onClose}>
-            Close
-          </PillButton>
-        </div>
+        {hideFooter ? null : (
+          <div className="mt-6 text-right">
+            <PillButton variant="secondary" onClick={onClose}>
+              Close
+            </PillButton>
+          </div>
+        )}
       </div>
     </div>
   );
