@@ -268,15 +268,16 @@ export default function HealthPage() {
                       } as React.CSSProperties
                     }
                   />
-                  {/* Submitted-value dot row. Container is a fixed-
-                      height block with no flex/grid; each dot is
-                      absolutely positioned, sized fully inline, and
-                      box-sizing:border-box so the 1.5px white border
-                      sits inside the declared width/height — making
-                      every dot a perfect circle regardless of any
-                      Tailwind preflight interaction. mt is 10px so
-                      the dot row fully clears the 22px slider thumb
-                      (which extends ±11px from the 6px track centre). */}
+                  {/* Submitted-value dot row. Every dot is 10x10
+                      regardless of owner (own-dot still uses z-index
+                      to sit on top when values overlap). All shape
+                      properties are inline + locked from every angle
+                      (width === minWidth === maxWidth and same for
+                      height, aspect-ratio 1:1, padding/margin 0) so
+                      no inherited rule, subpixel quirk, or parent
+                      layout context can produce an oval or off-size.
+                      mt is 10px so the row fully clears the 22px
+                      slider thumb (±11px from the 6px track centre). */}
                   <div
                     style={{
                       position: "relative",
@@ -291,10 +292,18 @@ export default function HealthPage() {
                         title={`${d.name}: ${d.val}`}
                         style={{
                           position: "absolute",
+                          display: "block",
                           left: `${d.val}%`,
                           top: "50%",
-                          width: d.isMe ? 12 : 10,
-                          height: d.isMe ? 12 : 10,
+                          width: 10,
+                          height: 10,
+                          minWidth: 10,
+                          minHeight: 10,
+                          maxWidth: 10,
+                          maxHeight: 10,
+                          aspectRatio: "1 / 1",
+                          padding: 0,
+                          margin: 0,
                           borderRadius: "50%",
                           background: d.color.hex,
                           border: "1.5px solid #ffffff",
@@ -303,6 +312,7 @@ export default function HealthPage() {
                           boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
                           zIndex: d.isMe ? 2 : 1,
                           flexShrink: 0,
+                          flexGrow: 0,
                         }}
                       />
                     ))}
