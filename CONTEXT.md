@@ -39,7 +39,7 @@ Env vars `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` a
 ### Phase 2 — Pages
 - [x] Page 0 — Welcome (agenda, goal, participant list, "Start the session →")
 - [x] Page 1 — Celebrate (banner, 3 story modals, proud_moments + reactions, 4 stat modals, success_defs + reactions)
-- [ ] Page 2 — Health Check + Retro
+- [x] Page 2 — Health Check + Retro (4 dials with live team-avg + dots, click-to-drop direction pin, 2×3 retro board with per-card reactions)
 - [ ] Page 3 — Commitments (fake AI synthesis card)
 - [ ] Page 4 — BAU (drag-drop criteria + notes)
 - [ ] Page 5 — Org Evolution (5-month timeline with drag-drop pins + notes)
@@ -49,7 +49,24 @@ Env vars `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` a
 
 ## 5. Where we are right now
 
-Phase 2 batch 1 shipped (pages 0 + 1 + shell). Awaiting 2-window verification on Vercel.
+Phase 2 batch 2 shipped (Page 2 — Health check + Retro). Awaiting 2-window verification.
+
+Health page architecture:
+- `useHealthSubmissions(sessionId)` returns `{ submissions: Map<participant_id, HealthSubmission>, loaded }`. PK is `(session_id, participant_id)`, so participant_id is a safe key. Dials and pin live on the SAME row, both nullable independently (ambiguity c).
+- Writes use `upsert` with the FULL row from local state — the same user is the only writer for their own row, so reading other fields from state is safe.
+  - submitDials() = upsert with dials filled + submitted_at = now
+  - unsubmitDials() = upsert with dials NULL + submitted_at NULL (preserves pin)
+  - dropPin(x, y) = upsert with pin_x/pin_y set (preserves dials)
+- Draft state for dials is component-local (initRef pattern initializes once from the user's existing submission, then the draft is owned by the component so Edit preserves the last answer).
+- Direction pin scatter uses `pointer-events: none` on the pin discs so clicks always land on the scatter background (lets you click-to-move a pin even when clicking near another participant's pin).
+- Retro grid uses `gridTemplateColumns: "120px 1fr 1fr 1fr"` with a header row + 2 lane rows. Each cell is a `RetroCell` with its own draft state (Enter submits, input clears on success). Card reactions reuse the shared `useReactions` hook with `entry_type: "retro_card"`.
+
+### Routing map
+
+- `/r/[code]` — Welcome (page 0)
+- `/r/[code]/celebrate` — Celebrate (page 1)
+- `/r/[code]/health` — Health check + Retro (page 2)
+- `/r/[code]/{commitments,bau,org,bolder,close}` — placeholders
 
 - `/r/[code]` is now the Welcome page (page 0): magenta badge, hero heading, goal banner, live participant list, agenda morning/afternoon, "Start the session →".
 - `/r/[code]/celebrate` is page 1: 6-months banner, 3 story tiles with click-to-open detail modals, proud_moments submit + list with reaction bars (live), 4 stat tiles with detail modals (the 50+ "Jazzicians" name list lives in the involved-stat detail), navy "BIG QUESTION" card with success_defs submit + list with reaction bars (live).
@@ -59,7 +76,7 @@ Phase 2 batch 1 shipped (pages 0 + 1 + shell). Awaiting 2-window verification on
 
 **Reset button NOT YET IMPLEMENTED** — destructive across 15 tables, kicks everyone out. Needs its own confirmation UX before shipping. Visible space reserved for it in the nav right-hand area but no button rendered. Will surface again before Phase 2 wraps.
 
-**Next up:** Phase 2 batch 2 — Page 2 (Health check + Retro). Most complex page in the build (4 dials per participant with live aggregation, click-anywhere scatter pin, 2×3 retro board with reactions). Gets its own batch.
+**Next up:** Phase 2 batch 3 — Pages 3 + 4 (Commitments + BAU). Commitments is straightforward (commitment wall + a static fake-AI synthesis card). BAU is drag-and-drop with a single jsonb blob (ambiguity d, last-write-wins) + notes.
 
 ### Data hooks (`hooks/`)
 
