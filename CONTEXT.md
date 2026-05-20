@@ -34,7 +34,7 @@ Env vars `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` a
 - [x] Step 1 — Scaffold Next.js, push to GitHub, deploy to Vercel (DONE)
 - [x] Step 2 — Schema applied in Supabase. SQL lives at `supabase/schema.sql`. 16 tables, RLS on, 15 in realtime publication.
 - [x] Step 3 — Design tokens + 9 base components (DONE). `npm run build` passes.
-- [ ] Step 4 — Build join flow + SessionProvider + realtime participant list
+- [x] Step 4 — Join flow + SessionProvider + realtime participant list. Awaiting 2-window verification on Vercel.
 
 ### Phase 2 — Pages
 - [ ] Page 0 — Welcome
@@ -49,9 +49,32 @@ Env vars `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` a
 
 ## 5. Where we are right now
 
-Phase 1 Steps 2 and 3 are done. Schema is live in Supabase; the design system + base components are in place and the build is green. `/` currently renders a Step 3 visual sanity-check page — it will be replaced by the real Welcome page in Step 4.
+Phase 1 is complete pending a 2-window test on Vercel:
+- `/` is the join screen (room code + name → join or create).
+- `/r/[code]` is the in-room landing — shows the room code header, the current user's badge, and a live participant list. Inline name-entry form if visiting without an identity.
+- Identity persistence: `localStorage["cx:participant:<CODE>"]` (ambiguity g).
+- Realtime: one channel per session subscribes to `participants` with a `session_id=eq.<id>` filter. INSERT/UPDATE/DELETE all merge into local state by id.
 
-**Next up:** Phase 1 Step 4 — join flow + SessionProvider + realtime participant list. This is where the Next 16 / React 19 realtime patterns get exercised; check `node_modules/next/dist/docs/01-app/01-getting-started/05-server-and-client-components.md` and the `@supabase/supabase-js` realtime channel API before writing it.
+**Next up:** Phase 2. Full scope (all 8 pages, full fidelity). Batched in this order, each batch paused for 2-window verification before continuing:
+
+1. **Pages 0 + 1** — Welcome + Celebrate (lighter pages)
+2. **Page 2** — Health check + Retro (complex, deserves its own batch)
+3. **Pages 3 + 4** — Commitments + BAU
+4. **Pages 5 + 6** — Org evolution + Bold to bolder
+5. **Page 7 + stress test** — Close + 6-browser sync test
+
+Top nav (8 tabs) and footer prev/next ship with batch 1.
+
+### Data-layer map (`lib/`)
+
+- `supabase.ts` — lazy browser singleton client. `getSupabase()`.
+- `identity.ts` — `getStoredParticipantId(code)` / `storeParticipantId(code, id)` / `clearStoredParticipantId(code)`.
+- `rooms.ts` — `normalizeCode`, `isValidCode`, `findSessionByCode`, `fetchParticipants`, `createParticipant`, `joinOrCreateRoom`, `joinExistingRoom`. Color assignment = `participants.length % 5` at join time; collisions tolerated (ambiguity i: with 6–10 people and 5 colors, repeats are expected — name + initials disambiguate).
+- `colors.ts` — `COLORS` palette (5 entries, DB color_idx maps here), `colorForIdx`, `RAG`, `initials`.
+
+### Provider
+
+`app/components/SessionProvider.tsx` wraps `/r/[code]` and exposes `useSession()` returning `{ status, session, participants, currentParticipant, setCurrentParticipant }`. Status is `"loading" | "not-found" | "loaded"`.
 
 ### Design system map (`app/components/`)
 
