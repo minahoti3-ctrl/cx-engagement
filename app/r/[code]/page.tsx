@@ -18,8 +18,8 @@ const MORNING = [
 ];
 const AFTERNOON = [
   { title: "Looking ahead: Transition to BAU",   mins: "40 min" },
-  { title: "Looking ahead: From bold to bolder", mins: "40 min" },
   { title: "Looking ahead: CX org evolution",    mins: "40 min" },
+  { title: "Looking ahead: From bold to bolder", mins: "40 min" },
 ];
 
 export default function WelcomePage() {

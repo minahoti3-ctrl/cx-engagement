@@ -30,20 +30,6 @@ type ReactionRow = {
 // Map: entry_id -> kind -> participant_ids who reacted.
 export type ReactionMap = Map<string, Partial<Record<ReactionKind, string[]>>>;
 
-function bucket(
-  map: ReactionMap,
-  entryId: string,
-  kind: ReactionKind,
-): string[] {
-  let inner = map.get(entryId);
-  if (!inner) {
-    inner = {};
-    map.set(entryId, inner);
-  }
-  if (!inner[kind]) inner[kind] = [];
-  return inner[kind]!;
-}
-
 // One subscription per session covers every entry_type — we filter
 // in-handler. A workshop has at most a few hundred reactions so this
 // is cheap, and it means each page only opens one realtime channel
@@ -71,7 +57,11 @@ export function useReactions(sessionId: string | null) {
       }
       const next: ReactionMap = new Map();
       for (const r of (data ?? []) as ReactionRow[]) {
-        bucket(next, r.entry_id, r.kind).push(r.participant_id);
+        const inner = next.get(r.entry_id) ?? {};
+        const arr = inner[r.kind] ?? [];
+        if (!arr.includes(r.participant_id)) arr.push(r.participant_id);
+        inner[r.kind] = arr;
+        next.set(r.entry_id, inner);
       }
       setReactions(next);
     })();
@@ -88,23 +78,36 @@ export function useReactions(sessionId: string | null) {
         },
         (payload) => {
           setReactions((prev) => {
-            const next: ReactionMap = new Map();
-            for (const [k, v] of prev) next.set(k, { ...v });
-
             if (payload.eventType === "INSERT") {
               const r = payload.new as ReactionRow;
-              const arr = bucket(next, r.entry_id, r.kind);
-              if (!arr.includes(r.participant_id)) arr.push(r.participant_id);
-            } else if (payload.eventType === "DELETE") {
+              const prevInner = prev.get(r.entry_id);
+              const prevArr = prevInner?.[r.kind] ?? [];
+              if (prevArr.includes(r.participant_id)) return prev;
+              const next = new Map(prev);
+              next.set(r.entry_id, {
+                ...prevInner,
+                [r.kind]: [...prevArr, r.participant_id],
+              });
+              return next;
+            }
+            if (payload.eventType === "DELETE") {
+              // Requires REPLICA IDENTITY FULL on public.reactions
+              // (see supabase/migrations/001_reactions_replica_identity_full.sql).
+              // Default replica identity only emits the PK on delete, but
+              // we key state by entry_id / kind / participant_id.
               const r = payload.old as Partial<ReactionRow>;
               if (!r.entry_id || !r.kind || !r.participant_id) return prev;
-              const inner = next.get(r.entry_id);
-              if (!inner || !inner[r.kind]) return next;
-              inner[r.kind] = inner[r.kind]!.filter(
-                (pid) => pid !== r.participant_id,
-              );
+              const prevInner = prev.get(r.entry_id);
+              const prevArr = prevInner?.[r.kind] ?? [];
+              if (!prevArr.includes(r.participant_id)) return prev;
+              const next = new Map(prev);
+              next.set(r.entry_id, {
+                ...prevInner,
+                [r.kind]: prevArr.filter((pid) => pid !== r.participant_id),
+              });
+              return next;
             }
-            return next;
+            return prev;
           });
         },
       )

@@ -278,6 +278,13 @@ create unique index if not exists reactions_one_rag_per_trigger
   on public.reactions (entry_id, participant_id)
   where kind in ('green','amber','red');
 
+-- Realtime DELETE events default to shipping only PK columns in the old
+-- payload. The client-side ReactionMap is keyed by entry_id / kind /
+-- participant_id, none of which are the PK — so we need every column in
+-- the old payload to locate the removed row. REPLICA IDENTITY FULL does
+-- exactly that. Cheap for a workshop-scale table.
+alter table public.reactions replica identity full;
+
 -- =====================================================================
 -- Row Level Security
 --
