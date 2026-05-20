@@ -268,22 +268,42 @@ export default function HealthPage() {
                       } as React.CSSProperties
                     }
                   />
-                  <div className="relative h-3.5 mt-0.5">
+                  {/* Submitted-value dot row. Container is a fixed-
+                      height block with no flex/grid; each dot is
+                      absolutely positioned, sized fully inline, and
+                      box-sizing:border-box so the 1.5px white border
+                      sits inside the declared width/height — making
+                      every dot a perfect circle regardless of any
+                      Tailwind preflight interaction. mt is 10px so
+                      the dot row fully clears the 22px slider thumb
+                      (which extends ±11px from the 6px track centre). */}
+                  <div
+                    style={{
+                      position: "relative",
+                      width: "100%",
+                      height: 14,
+                      marginTop: 10,
+                    }}
+                  >
                     {dots.map((d) => (
                       <div
                         key={d.id}
-                        className="absolute rounded-full border-[1.5px] border-white"
+                        title={`${d.name}: ${d.val}`}
                         style={{
+                          position: "absolute",
                           left: `${d.val}%`,
                           top: "50%",
                           width: d.isMe ? 12 : 10,
                           height: d.isMe ? 12 : 10,
+                          borderRadius: "50%",
                           background: d.color.hex,
+                          border: "1.5px solid #ffffff",
+                          boxSizing: "border-box",
                           transform: "translate(-50%,-50%)",
                           boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
                           zIndex: d.isMe ? 2 : 1,
+                          flexShrink: 0,
                         }}
-                        title={`${d.name}: ${d.val}`}
                       />
                     ))}
                   </div>
