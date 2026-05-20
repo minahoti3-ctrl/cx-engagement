@@ -290,6 +290,27 @@ export default function HealthPage() {
                       <div
                         key={d.id}
                         title={`${d.name}: ${d.val}`}
+                        ref={(el) => {
+                          if (!el) return;
+                          const cs = getComputedStyle(el);
+                          const parentCs = el.parentElement
+                            ? getComputedStyle(el.parentElement)
+                            : null;
+                          // eslint-disable-next-line no-console
+                          console.log(
+                            `[dot ${dim.key}/${d.name}@${d.val}%] ` +
+                              `offset=${el.offsetWidth}x${el.offsetHeight} ` +
+                              `client=${el.clientWidth}x${el.clientHeight} ` +
+                              `bound=${Math.round(el.getBoundingClientRect().width * 10) / 10}x${Math.round(el.getBoundingClientRect().height * 10) / 10} ` +
+                              `computed=${cs.width}x${cs.height} ` +
+                              `box=${cs.boxSizing} border=${cs.borderWidth} ` +
+                              `aspect=${cs.aspectRatio} display=${cs.display} ` +
+                              `pos=${cs.position} ` +
+                              `parent={display=${parentCs?.display ?? "?"}, ` +
+                              `width=${parentCs?.width ?? "?"}, ` +
+                              `height=${parentCs?.height ?? "?"}}`,
+                          );
+                        }}
                         style={{
                           position: "absolute",
                           display: "block",
