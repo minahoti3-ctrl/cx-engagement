@@ -194,18 +194,19 @@ create index if not exists org_notes_session_idx on public.org_notes(session_id)
 -- =====================================================================
 -- Page 6 — Bold to Bolder
 --
--- readiness_signals: per-participant RAG for the THREE FIXED top-of-page
--- signals (s1, s2, s3). Per resolved ambiguity e, this table is reserved
--- only for those three keys; trigger entry ratings go through `reactions`.
+-- readiness_signals: ROOM-WIDE RAG for the THREE FIXED top-of-page
+-- signals (s1, s2, s3). One row per (session, signal). Last-write-wins —
+-- whoever clicks most recently sets the color for everyone. Per resolved
+-- ambiguity e, this table is reserved only for those three keys;
+-- trigger entry ratings go through `reactions`.
 -- =====================================================================
 
 create table if not exists public.readiness_signals (
   session_id      uuid not null references public.sessions(id) on delete cascade,
-  participant_id  uuid not null references public.participants(id) on delete cascade,
   signal_key      text not null check (signal_key in ('s1','s2','s3')),
   rating          text not null check (rating in ('green','amber','red')),
   updated_at      timestamptz not null default now(),
-  primary key (session_id, participant_id, signal_key)
+  primary key (session_id, signal_key)
 );
 
 create table if not exists public.bolder_triggers (
@@ -288,10 +289,16 @@ alter table public.reactions replica identity full;
 -- Safety net for tables that gain UPDATE traffic in Phase 2:
 --   - commitments: Page 3 supports edit-by-author
 --   - bau_criteria: Page 4 last-write-wins jsonb on every drag
--- Neither is strictly required (client state keys by the PK on both),
--- but cheap belt-and-braces for any future refactor.
-alter table public.commitments  replica identity full;
-alter table public.bau_criteria replica identity full;
+--   - readiness_signals: Page 6 room-wide RAG, upsert on every click
+--   - org_pins: Page 5 drag/drop updates month on the same row
+--   - bolder_triggers: no UPDATE in spec, included for consistency
+-- Most are not strictly required (client state keys by the PK), but
+-- cheap belt-and-braces for any future refactor.
+alter table public.commitments       replica identity full;
+alter table public.bau_criteria      replica identity full;
+alter table public.readiness_signals replica identity full;
+alter table public.org_pins          replica identity full;
+alter table public.bolder_triggers   replica identity full;
 
 -- =====================================================================
 -- Row Level Security
