@@ -37,8 +37,8 @@ Env vars `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` a
 - [x] Step 4 — Join flow + SessionProvider + realtime participant list. Awaiting 2-window verification on Vercel.
 
 ### Phase 2 — Pages
-- [ ] Page 0 — Welcome
-- [ ] Page 1 — Celebrate
+- [x] Page 0 — Welcome (agenda, goal, participant list, "Start the session →")
+- [x] Page 1 — Celebrate (banner, 3 story modals, proud_moments + reactions, 4 stat modals, success_defs + reactions)
 - [ ] Page 2 — Health Check + Retro
 - [ ] Page 3 — Commitments (fake AI synthesis card)
 - [ ] Page 4 — BAU (drag-drop criteria + notes)
@@ -49,21 +49,29 @@ Env vars `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` a
 
 ## 5. Where we are right now
 
-Phase 1 is complete pending a 2-window test on Vercel:
-- `/` is the join screen (room code + name → join or create).
-- `/r/[code]` is the in-room landing — shows the room code header, the current user's badge, and a live participant list. Inline name-entry form if visiting without an identity.
-- Identity persistence: `localStorage["cx:participant:<CODE>"]` (ambiguity g).
-- Realtime: one channel per session subscribes to `participants` with a `session_id=eq.<id>` filter. INSERT/UPDATE/DELETE all merge into local state by id.
+Phase 2 batch 1 shipped (pages 0 + 1 + shell). Awaiting 2-window verification on Vercel.
 
-**Next up:** Phase 2. Full scope (all 8 pages, full fidelity). Batched in this order, each batch paused for 2-window verification before continuing:
+- `/r/[code]` is now the Welcome page (page 0): magenta badge, hero heading, goal banner, live participant list, agenda morning/afternoon, "Start the session →".
+- `/r/[code]/celebrate` is page 1: 6-months banner, 3 story tiles with click-to-open detail modals, proud_moments submit + list with reaction bars (live), 4 stat tiles with detail modals (the 50+ "Jazzicians" name list lives in the involved-stat detail), navy "BIG QUESTION" card with success_defs submit + list with reaction bars (live).
+- All 8 page routes exist (`/r/[code]`, `/r/[code]/celebrate`, then `/health`, `/commitments`, `/bau`, `/org`, `/bolder`, `/close`). Pages 2–7 are placeholders using `ComingSoon`.
+- `PageNav` (sticky top, 8 tabs + room code + your badge + count) and `PageFooter` (← Back / Page X of 8 / Next →) wrap every room page.
+- Realtime: pages subscribe to their entries via `useEntries` and to all reactions via `useReactions` (one channel for all reactions on a page, filtered client-side by entry_type).
 
-1. **Pages 0 + 1** — Welcome + Celebrate (lighter pages)
-2. **Page 2** — Health check + Retro (complex, deserves its own batch)
-3. **Pages 3 + 4** — Commitments + BAU
-4. **Pages 5 + 6** — Org evolution + Bold to bolder
-5. **Page 7 + stress test** — Close + 6-browser sync test
+**Reset button NOT YET IMPLEMENTED** — destructive across 15 tables, kicks everyone out. Needs its own confirmation UX before shipping. Visible space reserved for it in the nav right-hand area but no button rendered. Will surface again before Phase 2 wraps.
 
-Top nav (8 tabs) and footer prev/next ship with batch 1.
+**Next up:** Phase 2 batch 2 — Page 2 (Health check + Retro). Most complex page in the build (4 dials per participant with live aggregation, click-anywhere scatter pin, 2×3 retro board with reactions). Gets its own batch.
+
+### Data hooks (`hooks/`)
+
+- `useEntries<T>(table, sessionId, orderBy?)` — generic load + realtime subscription for any per-session table.
+- `useReactions(sessionId)` — one subscription for all reactions in the session. Returns `{ reactions: ReactionMap, toggleReaction }`. `reactions.get(entryId)?.[kind]` gives the participant_id array. `toggleReaction(entryType, entryId, participantId, kind)` handles insert/delete + ignores 23505 unique-violation races.
+
+### Routing map
+
+- `/` — join screen
+- `/r/[code]` — Welcome (page 0)
+- `/r/[code]/celebrate` — Celebrate (page 1)
+- `/r/[code]/{health,commitments,bau,org,bolder,close}` — placeholders
 
 ### Data-layer map (`lib/`)
 

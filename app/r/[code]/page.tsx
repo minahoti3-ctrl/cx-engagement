@@ -4,14 +4,25 @@ import Link from "next/link";
 import { useState } from "react";
 import { Card } from "@/app/components/Card";
 import { Eyebrow } from "@/app/components/Eyebrow";
-import { ParticipantBadge } from "@/app/components/ParticipantBadge";
 import { PillButton } from "@/app/components/PillButton";
 import { ShapesBg } from "@/app/components/ShapesBg";
 import { useSession } from "@/app/components/SessionProvider";
 import { COLORS, colorForIdx } from "@/lib/colors";
+import { pageHref } from "@/lib/pages";
 import { joinExistingRoom } from "@/lib/rooms";
 
-export default function RoomLanding() {
+const MORNING = [
+  { title: "Let's celebrate our success",      mins: "30 min" },
+  { title: "Program health check & retro",     mins: "45 min" },
+  { title: "Commitments going forward",        mins: "30 min" },
+];
+const AFTERNOON = [
+  { title: "Looking ahead: Transition to BAU",   mins: "40 min" },
+  { title: "Looking ahead: From bold to bolder", mins: "40 min" },
+  { title: "Looking ahead: CX org evolution",    mins: "40 min" },
+];
+
+export default function WelcomePage() {
   const { status, session, participants, currentParticipant } = useSession();
 
   if (status === "loading") {
@@ -44,30 +55,48 @@ export default function RoomLanding() {
 
   return (
     <main className="page-shell">
-      <ShapesBg density="sparse" />
+      <ShapesBg density="full" />
       <div className="relative z-10">
-        <header className="flex items-start justify-between mb-8 flex-wrap gap-4">
-          <div>
-            <Eyebrow color="var(--color-magenta)">ROOM</Eyebrow>
-            <div className="font-medium text-3xl text-navy tracking-[3px]">
-              {session.code}
-            </div>
-          </div>
-          {currentParticipant ? (
-            <YouBlock
-              name={currentParticipant.name}
-              colorIdx={currentParticipant.color_idx}
-            />
-          ) : null}
-        </header>
+        <div
+          className="inline-block px-3.5 py-1.5 rounded-full text-xs font-medium text-white mb-4"
+          style={{ background: COLORS[0].hex }}
+        >
+          Leadership session · 6-month reflection
+        </div>
+        <h1 className="text-[38px] font-medium leading-[1.1] text-navy mb-5 max-w-[720px]">
+          Welcome!{" "}
+          <span
+            className="px-2 rounded-md"
+            style={{ background: COLORS[3].tint }}
+          >
+            Let&apos;s spend a day
+          </span>{" "}
+          actually talking.
+        </h1>
+        <p className="text-[15px] text-ink-mute leading-relaxed max-w-[560px] mb-8">
+          Today we&apos;re taking stock of where the CX Transformation stands at the
+          6-month mark. Move through the pages at your own pace — your
+          contributions appear live for everyone in the room.
+        </p>
 
         {!currentParticipant ? <JoinAsNew /> : null}
 
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <Eyebrow color="var(--color-cobalt)" className="mb-0">
-              IN THE ROOM
-            </Eyebrow>
+        <Card style={{ background: COLORS[1].tint }} className="max-w-[900px] mb-8 border-transparent">
+          <Eyebrow color={COLORS[1].hex}>OUR GOAL FOR TODAY</Eyebrow>
+          <p
+            className="text-[15px] leading-relaxed"
+            style={{ color: COLORS[1].dark }}
+          >
+            Take a meaningful pause at the 6-month mark to honestly assess where
+            the CX Transformation stands — with a focus on impact over activity,
+            program health, and direction. Leave with clear alignment on where
+            we&apos;re going and what needs to change.
+          </p>
+        </Card>
+
+        <Card className="max-w-[900px] mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <Eyebrow color={COLORS[2].hex} className="mb-0">IN THE ROOM</Eyebrow>
             <div className="text-xs text-ink-faint">
               {participants.length}{" "}
               {participants.length === 1 ? "person" : "people"}
@@ -88,10 +117,7 @@ export default function RoomLanding() {
                     className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium"
                     style={{ background: c.tint, color: c.dark }}
                   >
-                    <span
-                      className="w-2 h-2 rounded-full"
-                      style={{ background: c.hex }}
-                    />
+                    <span className="w-2 h-2 rounded-full" style={{ background: c.hex }} />
                     {p.name}
                     {isMe ? (
                       <span className="text-[10px] opacity-60 ml-0.5">(you)</span>
@@ -103,35 +129,56 @@ export default function RoomLanding() {
           )}
         </Card>
 
-        <ShareCard code={session.code} />
-
-        <div className="mt-10 text-xs text-ink-faint">
-          The full agenda (Welcome · Celebrate · Health check · Commitments · BAU ·
-          Org evolution · Bold to bolder · Close) lands next — pages will appear in
-          the nav as they ship.
+        <div className="max-w-[900px]">
+          <Eyebrow color={COLORS[2].hex}>AGENDA</Eyebrow>
+          <h2 className="text-2xl font-medium text-navy mb-5">How we&apos;ll spend the day</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Card>
+              <Eyebrow color={COLORS[0].hex}>MORNING</Eyebrow>
+              {MORNING.map((item) => (
+                <div
+                  key={item.title}
+                  className="flex justify-between items-baseline mt-3"
+                >
+                  <div
+                    className="text-[13px] font-medium"
+                    style={{ color: COLORS[1].hex }}
+                  >
+                    {item.title}
+                  </div>
+                  <div className="text-[11px] text-ink-ghost">{item.mins}</div>
+                </div>
+              ))}
+            </Card>
+            <Card>
+              <Eyebrow color={COLORS[2].hex}>AFTERNOON</Eyebrow>
+              {AFTERNOON.map((item) => (
+                <div
+                  key={item.title}
+                  className="flex justify-between items-baseline mt-3"
+                >
+                  <div
+                    className="text-[13px] font-medium"
+                    style={{ color: COLORS[1].hex }}
+                  >
+                    {item.title}
+                  </div>
+                  <div className="text-[11px] text-ink-ghost">{item.mins}</div>
+                </div>
+              ))}
+            </Card>
+          </div>
         </div>
+
+        {currentParticipant ? (
+          <div className="mt-10">
+            <Link href={pageHref(session.code, "celebrate")} prefetch>
+              <PillButton>Start the session →</PillButton>
+            </Link>
+          </div>
+        ) : null}
       </div>
     </main>
-  );
-}
-
-function YouBlock({ name, colorIdx }: { name: string; colorIdx: number }) {
-  const c = colorForIdx(colorIdx);
-  return (
-    <div
-      className="flex items-center gap-3 px-4 py-2 rounded-full"
-      style={{ background: c.tint }}
-    >
-      <ParticipantBadge name={name} colorIdx={colorIdx} size="lg" />
-      <div className="leading-tight">
-        <div className="font-medium text-sm" style={{ color: c.dark }}>
-          {name}
-        </div>
-        <div className="text-[10px]" style={{ color: c.dark, opacity: 0.7 }}>
-          that&apos;s you · {c.name}
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -161,10 +208,10 @@ function JoinAsNew() {
   const previewColor = colorForIdx(participants.length);
 
   return (
-    <Card accent={COLORS[0].hex} className="mb-6">
+    <Card accent={COLORS[0].hex} className="mb-8 max-w-[560px]">
       <Eyebrow color={COLORS[0].hex}>JOIN THIS ROOM</Eyebrow>
       <h3 className="text-lg font-medium mb-3 text-navy">
-        Add your name to join the conversation.
+        Add your name to the conversation.
       </h3>
       <form onSubmit={submit} className="flex flex-wrap items-center gap-2">
         <input
@@ -183,7 +230,8 @@ function JoinAsNew() {
           className="inline-block w-2.5 h-2.5 rounded-full"
           style={{ background: previewColor.hex }}
         />
-        You&apos;ll join as <strong className="capitalize">{previewColor.name}</strong> · #{participants.length + 1} in the room.
+        You&apos;ll join as <strong className="capitalize ml-0.5">{previewColor.name}</strong>{" "}
+        · #{participants.length + 1} in the room.
       </div>
       {err ? (
         <div
@@ -197,33 +245,5 @@ function JoinAsNew() {
         </div>
       ) : null}
     </Card>
-  );
-}
-
-function ShareCard({ code }: { code: string }) {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    if (typeof window === "undefined") return;
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // ignore
-    }
-  };
-  return (
-    <div className="mt-6 flex items-center gap-3 text-xs text-ink-faint">
-      <span>
-        Share this room: code <strong className="text-ink tracking-[2px]">{code}</strong>
-      </span>
-      <button
-        type="button"
-        onClick={copy}
-        className="px-2.5 py-1 rounded-full bg-white border border-black/10 text-[11px] hover:bg-cream transition"
-      >
-        {copied ? "Copied ✓" : "Copy link"}
-      </button>
-    </div>
   );
 }
