@@ -32,8 +32,8 @@ Env vars `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` a
 
 ### Phase 1 — Foundation
 - [x] Step 1 — Scaffold Next.js, push to GitHub, deploy to Vercel (DONE)
-- [x] Step 2 — Schema SQL written at `supabase/schema.sql`. Awaiting Mina to paste & run in Supabase SQL editor.
-- [ ] Step 3 — Build design system (Tailwind config, base components)
+- [x] Step 2 — Schema applied in Supabase. SQL lives at `supabase/schema.sql`. 16 tables, RLS on, 15 in realtime publication.
+- [x] Step 3 — Design tokens + 9 base components (DONE). `npm run build` passes.
 - [ ] Step 4 — Build join flow + SessionProvider + realtime participant list
 
 ### Phase 2 — Pages
@@ -49,9 +49,27 @@ Env vars `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` a
 
 ## 5. Where we are right now
 
-Phase 1 Step 2 schema is written at `supabase/schema.sql` and committed. Mina needs to paste it into https://supabase.com/dashboard/project/sdjbfxwakuexwiiukklf/sql/new and run it. The file is idempotent (re-runnable) and contains a commented-out RESET block at the top.
+Phase 1 Steps 2 and 3 are done. Schema is live in Supabase; the design system + base components are in place and the build is green. `/` currently renders a Step 3 visual sanity-check page — it will be replaced by the real Welcome page in Step 4.
 
-**Next up after the schema runs:** Phase 1 Step 3 — design system + base components, then Step 4 — join flow with realtime.
+**Next up:** Phase 1 Step 4 — join flow + SessionProvider + realtime participant list. This is where the Next 16 / React 19 realtime patterns get exercised; check `node_modules/next/dist/docs/01-app/01-getting-started/05-server-and-client-components.md` and the `@supabase/supabase-js` realtime channel API before writing it.
+
+### Design system map (`app/components/`)
+
+| Component | Purpose | Notes |
+|---|---|---|
+| `Card` | Standard white panel with rounded-2xl + hairline border | `accent` prop adds the colored left rail used on BAU/Org/Bolder "question" cards |
+| `Eyebrow` | All-caps colored label above headings | Default color = navy |
+| `PillButton` | Primary / secondary / ghost button | Accepts `color` override for hero bands |
+| `ParticipantBadge` | Initials disc in the participant's color | `size: 'sm' \| 'lg'` |
+| `ReactionBar` | Heart / like / question reaction strip | Pure presentational — parent owns toggle + data |
+| `ShapesBg` | Decorative circles/squares/triangles | `density: 'sparse' \| 'full'` |
+| `Banner` | Big rounded hero band (Celebrate, Close) | `background` + `textColor` overrides |
+| `NotesSection` | "NOTES & DECISIONS · LIVE" card used on pages 4/5/6 | Owns its own draft state, takes `onSubmit(text)` |
+| `Modal` | Backdrop-dismiss modal w/ Esc + scroll lock | Used by Celebrate's story tiles |
+
+Single source of truth for the 5-color participant palette: `lib/colors.ts` (`COLORS`, indices 0..4 — DO NOT reorder, the DB stores `color_idx` against this order). Tailwind tokens for static colors live in `app/globals.css` under `@theme` (e.g. `bg-navy`, `text-ink-mute`, `bg-rag-green-tint`).
+
+**Not built yet — intentional:** top Nav, footer prev/next, drag-drop helpers, the health slider visualization, the 5-month timeline. These are page-specific and will live inline in Phase 2 (or be extracted later if they actually repeat).
 
 ### Schema cheat-sheet (what's in the DB)
 
