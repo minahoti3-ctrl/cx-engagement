@@ -268,21 +268,19 @@ export default function HealthPage() {
                       } as React.CSSProperties
                     }
                   />
-                  {/* Submitted-value dot row. Every dot is 10x10
-                      regardless of owner (own-dot still uses z-index
-                      to sit on top when values overlap). All shape
-                      properties are inline + locked from every angle
-                      (width === minWidth === maxWidth and same for
-                      height, aspect-ratio 1:1, padding/margin 0) so
-                      no inherited rule, subpixel quirk, or parent
-                      layout context can produce an oval or off-size.
-                      mt is 10px so the row fully clears the 22px
-                      slider thumb (±11px from the 6px track centre). */}
+                  {/* Submitted-value dot row. 12px dots with a whole-
+                      pixel 2px white border so participants viewing
+                      at non-100% zoom (89%, 110%, etc. on their own
+                      laptops / phones) don't see sub-pixel rounding
+                      make the dots look uneven. will-change:transform
+                      promotes each dot to its own compositor layer
+                      so anti-aliasing stays consistent regardless of
+                      what neighbouring elements are painting. */}
                   <div
                     style={{
                       position: "relative",
                       width: "100%",
-                      height: 14,
+                      height: 16,
                       marginTop: 10,
                     }}
                   >
@@ -290,46 +288,26 @@ export default function HealthPage() {
                       <div
                         key={d.id}
                         title={`${d.name}: ${d.val}`}
-                        ref={(el) => {
-                          if (!el) return;
-                          const cs = getComputedStyle(el);
-                          const parentCs = el.parentElement
-                            ? getComputedStyle(el.parentElement)
-                            : null;
-                          // eslint-disable-next-line no-console
-                          console.log(
-                            `[dot ${dim.key}/${d.name}@${d.val}%] ` +
-                              `offset=${el.offsetWidth}x${el.offsetHeight} ` +
-                              `client=${el.clientWidth}x${el.clientHeight} ` +
-                              `bound=${Math.round(el.getBoundingClientRect().width * 10) / 10}x${Math.round(el.getBoundingClientRect().height * 10) / 10} ` +
-                              `computed=${cs.width}x${cs.height} ` +
-                              `box=${cs.boxSizing} border=${cs.borderWidth} ` +
-                              `aspect=${cs.aspectRatio} display=${cs.display} ` +
-                              `pos=${cs.position} ` +
-                              `parent={display=${parentCs?.display ?? "?"}, ` +
-                              `width=${parentCs?.width ?? "?"}, ` +
-                              `height=${parentCs?.height ?? "?"}}`,
-                          );
-                        }}
                         style={{
                           position: "absolute",
                           display: "block",
                           left: `${d.val}%`,
                           top: "50%",
-                          width: 10,
-                          height: 10,
-                          minWidth: 10,
-                          minHeight: 10,
-                          maxWidth: 10,
-                          maxHeight: 10,
+                          width: 12,
+                          height: 12,
+                          minWidth: 12,
+                          minHeight: 12,
+                          maxWidth: 12,
+                          maxHeight: 12,
                           aspectRatio: "1 / 1",
                           padding: 0,
                           margin: 0,
                           borderRadius: "50%",
                           background: d.color.hex,
-                          border: "1.5px solid #ffffff",
+                          border: "2px solid #ffffff",
                           boxSizing: "border-box",
                           transform: "translate(-50%,-50%)",
+                          willChange: "transform",
                           boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
                           zIndex: d.isMe ? 2 : 1,
                           flexShrink: 0,
