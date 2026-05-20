@@ -285,6 +285,14 @@ create unique index if not exists reactions_one_rag_per_trigger
 -- exactly that. Cheap for a workshop-scale table.
 alter table public.reactions replica identity full;
 
+-- Safety net for tables that gain UPDATE traffic in Phase 2:
+--   - commitments: Page 3 supports edit-by-author
+--   - bau_criteria: Page 4 last-write-wins jsonb on every drag
+-- Neither is strictly required (client state keys by the PK on both),
+-- but cheap belt-and-braces for any future refactor.
+alter table public.commitments  replica identity full;
+alter table public.bau_criteria replica identity full;
+
 -- =====================================================================
 -- Row Level Security
 --

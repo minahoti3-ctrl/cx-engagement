@@ -40,8 +40,8 @@ Env vars `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` a
 - [x] Page 0 — Welcome (agenda, goal, participant list, "Start the session →")
 - [x] Page 1 — Celebrate (banner, 3 story modals, proud_moments + reactions, 4 stat modals, success_defs + reactions)
 - [x] Page 2 — Health Check + Retro (4 dials with live team-avg + dots, click-to-drop direction pin, 2×3 retro board with per-card reactions)
-- [ ] Page 3 — Commitments (fake AI synthesis card)
-- [ ] Page 4 — BAU (drag-drop criteria + notes)
+- [x] Page 3 — Commitments (LIVE synthesis card pulling from Page 2 data, commitment wall with author-edit, reactions)
+- [x] Page 4 — BAU (drag-drop criteria across must/nice/risk + tray, last-write-wins jsonb, notes)
 - [ ] Page 5 — Org Evolution (5-month timeline with drag-drop pins + notes)
 - [ ] Page 6 — Bold to Bolder (3 RAG signals + trigger submissions + notes)
 - [ ] Page 7 — Close (no video)
@@ -66,7 +66,29 @@ Health page architecture:
 - `/r/[code]` — Welcome (page 0)
 - `/r/[code]/celebrate` — Celebrate (page 1)
 - `/r/[code]/health` — Health check + Retro (page 2)
-- `/r/[code]/{commitments,bau,org,bolder,close}` — placeholders
+- `/r/[code]/commitments` — Commitments (page 3)
+- `/r/[code]/bau` — BAU / Transition (page 4)
+- `/r/[code]/{org,bolder,close}` — placeholders
+
+### Page 3 synthesis card
+
+The "✨ Session synthesis" card on Commitments pulls live data from page 2 via three existing hooks (`useHealthSubmissions`, `useEntries<RetroCard>("retro_cards", ...)`, `useReactions`). Recomputes via `useMemo` whenever any of those change. Three sub-blocks:
+
+1. **PROGRAM HEALTH AT A GLANCE** — 4 dial averages + lowest/highest call-out + spread interpretation ("tight consensus" if worst spread ≤ 22 across all dials, "mixed views" otherwise). Pre-submit fallback: "No health data yet — the synthesis will populate as the room submits on page 2."
+2. **WHERE THE ROOM PLACED THE PROGRAM** — pin quadrant tallies. Quadrants: top-right = "sweet spot (on course, fast)", top-left = "off course, fast", bottom-right = "on course, too slow", bottom-left = "off course, too slow". First quadrant in the sentence carries the word "pin"/"pins" (pluralized); subsequent quadrants drop it. Pre-pin fallback: "No pins dropped yet."
+3. **WHAT THE RETRO IS SAYING** — highest-reacted retro card (heart + like + q weighted equally; earliest created_at breaks ties). Renders the card text + only the reaction kinds with count > 0. Pre-reaction fallback: "No reactions on retro cards yet — the most-discussed card will surface here once the room weighs in."
+
+### Page 4 BAU concurrency
+
+One row per session in `bau_criteria` with a single jsonb `criteria` column holding `{must, nice, risk, tray}`. Every drag/drop/click-to-tray/×-delete/add writes the whole blob back. Last-write-wins (ambiguity d) — two simultaneous drags can clobber each other; for the workshop's 6–10 people this is acceptable. First Page-4 load for a new session seeds the row with the reference's default criteria; race-tolerant on the seed insert (23505 = lost race = we already have SEED locally + realtime echo will confirm).
+
+### Hooks
+
+- `useBauCriteria(sessionId)` — single-row hook returning `{ criteria, loaded, updateCriteria }`. Handles seed-on-first-load.
+
+### Migration 002
+
+`alter table public.commitments replica identity full;` + same for `bau_criteria`. Neither is strictly required (client keys state by PK on both), but cheap belt-and-braces. Already added to `schema.sql` so future re-runs include it; standalone file at `supabase/migrations/002_replica_identity_full_safety.sql`.
 
 - `/r/[code]` is now the Welcome page (page 0): magenta badge, hero heading, goal banner, live participant list, agenda morning/afternoon, "Start the session →".
 - `/r/[code]/celebrate` is page 1: 6-months banner, 3 story tiles with click-to-open detail modals, proud_moments submit + list with reaction bars (live), 4 stat tiles with detail modals (the 50+ "Jazzicians" name list lives in the involved-stat detail), navy "BIG QUESTION" card with success_defs submit + list with reaction bars (live).
@@ -76,7 +98,7 @@ Health page architecture:
 
 **Reset button NOT YET IMPLEMENTED** — destructive across 15 tables, kicks everyone out. Needs its own confirmation UX before shipping. Visible space reserved for it in the nav right-hand area but no button rendered. Will surface again before Phase 2 wraps.
 
-**Next up:** Phase 2 batch 3 — Pages 3 + 4 (Commitments + BAU). Commitments is straightforward (commitment wall + a static fake-AI synthesis card). BAU is drag-and-drop with a single jsonb blob (ambiguity d, last-write-wins) + notes.
+**Next up:** Phase 2 batch 4 — Pages 5 + 6 (Org evolution + Bold to bolder). Org evolution has the 5-month drag-drop timeline + pin submissions + notes. Bold to bolder has the 3 fixed RAG signals (per-participant) + trigger submissions with R/A/G ratings (reuses reactions with the green/amber/red kinds) + notes.
 
 ### Data hooks (`hooks/`)
 
