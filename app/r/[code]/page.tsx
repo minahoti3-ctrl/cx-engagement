@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { BirthdayPresent } from "@/app/components/BirthdayPresent";
 import { Card } from "@/app/components/Card";
 import { Eyebrow } from "@/app/components/Eyebrow";
 import { PillButton } from "@/app/components/PillButton";
@@ -178,6 +179,7 @@ export default function WelcomePage() {
           </div>
         ) : null}
       </div>
+      <BirthdayPresent />
     </main>
   );
 }
