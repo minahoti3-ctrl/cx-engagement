@@ -73,7 +73,7 @@ export default function WelcomePage() {
           >
             Let&apos;s spend a day
           </span>{" "}
-          actually talking.
+          reflecting.
         </h1>
         <p className="text-[15px] text-ink-mute leading-relaxed max-w-[560px] mb-8">
           Today we&apos;re taking stock of where the CX Transformation stands at the

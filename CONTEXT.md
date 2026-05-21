@@ -54,7 +54,7 @@ Pages 0–4 are all complete and verified across two browser windows. Phase 1 fo
 
 ### Page-by-page implementation history
 
-**Page 0 — Welcome.** Magenta badge, hero "Let's spend a day actually talking" with amber-tinted highlight, navy GOAL card, live participant chip list, two-column morning/afternoon agenda, "Start the session →" once joined. Inline JoinAsNew card appears for users hitting a shared `/r/[code]` URL without identity. Afternoon agenda reordered to match the nav (BAU → Org evolution → Bold to bolder) — a deviation from the reference's BAU → Bold → Org order.
+**Page 0 — Welcome.** Magenta badge, hero "Let's spend a day reflecting" with amber-tinted highlight, navy GOAL card, live participant chip list, two-column morning/afternoon agenda, "Start the session →" once joined. Inline JoinAsNew card appears for users hitting a shared `/r/[code]` URL without identity. Afternoon agenda reordered to match the nav (BAU → Org evolution → Bold to bolder) — a deviation from the reference's BAU → Bold → Org order.
 
 **Page 1 — Celebrate.** Magenta "6 months in!" banner with decorative shapes. Three story tiles (s1 magenta L&D / s2 cobalt FUSE / s3 lavender learning) open detail modals with verbatim copy from `STORIES`. Proud-moments card: realtime input + list with `ReactionBar` per moment. Four stat tiles (4 / 12 / 18 / 50+) open detail modals — the "50+ Jazzicians" tile contains the full names list verbatim. Navy "BIG QUESTION" card with `impact` (amber) and `activity` (magenta) highlights, success-defs input + reactable list. All entries via `useEntries`; all reactions via `useReactions` with `entry_type` = `proud_moment` / `success_def`.
 
