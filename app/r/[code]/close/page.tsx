@@ -79,6 +79,22 @@ export default function ClosePage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [refDraft, setRefDraft] = useState("");
   const [submittingRef, setSubmittingRef] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const onExportClick = async () => {
+    if (!sessionId || exporting) return;
+    setExporting(true);
+    try {
+      // Lazy-load @react-pdf/renderer — heavy, only needed on click.
+      const mod = await import("@/app/components/PdfExport");
+      await mod.exportSessionPdf(sessionId);
+    } catch (err) {
+      console.error("[session export]", err);
+      alert("Couldn't generate the export. Please try again.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const participantById = (id: string) =>
     participants.find((p) => p.id === id) ?? null;
@@ -174,6 +190,20 @@ export default function ClosePage() {
     <main className="page-shell">
       <ShapesBg density="full" />
       <div className="relative z-10">
+        {/* Export pill — anyone in the room can grab a clean PDF
+            record. Sits above the banner so it's reachable without
+            scrolling. */}
+        <div className="flex justify-end mb-3">
+          <button
+            type="button"
+            onClick={onExportClick}
+            disabled={!sessionId || exporting}
+            className="inline-flex items-center justify-center rounded-full px-[18px] py-[10px] text-[13px] font-medium border-[1.5px] border-navy text-navy bg-white shadow-sm transition-transform duration-100 hover:enabled:scale-[1.04] active:enabled:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {exporting ? "Generating…" : "Export session"}
+          </button>
+        </div>
+
         {/* Section 1 — Thank-you banner */}
         <Banner
           background={COLORS[1].hex}
