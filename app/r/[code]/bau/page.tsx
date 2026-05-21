@@ -1,15 +1,17 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Card } from "@/app/components/Card";
 import { Eyebrow } from "@/app/components/Eyebrow";
 import { NotesSection, type Note } from "@/app/components/NotesSection";
+import { ParticipantBadge } from "@/app/components/ParticipantBadge";
 import { PillButton } from "@/app/components/PillButton";
+import { ReactionBar } from "@/app/components/ReactionBar";
 import { ShapesBg } from "@/app/components/ShapesBg";
 import { useSession } from "@/app/components/SessionProvider";
-import { useBauCriteria, type BauColumn, type BauCriteriaShape } from "@/hooks/useBauCriteria";
 import { useEntries } from "@/hooks/useEntries";
-import { COLORS } from "@/lib/colors";
+import { useReactions, type ReactionKind } from "@/hooks/useReactions";
+import { COLORS, colorForIdx, type ParticipantColor } from "@/lib/colors";
 import { getSupabase } from "@/lib/supabase";
 
 type BauNote = {
@@ -20,108 +22,76 @@ type BauNote = {
   created_at: string;
 };
 
-const COLUMN_DEFS: ReadonlyArray<{
-  key: Exclude<BauColumn, "tray">;
-  label: string;
-  dot: string;
-  bg: string;
+type BauOptionComment = {
+  id: string;
+  session_id: string;
+  participant_id: string;
+  option_id: string;
+  text: string;
+  created_at: string;
+};
+
+type Participant = { id: string; name: string; color_idx: number };
+
+// Hardcoded BAU future-state options. The UUIDs are stable so the
+// reactions table (entry_id is uuid) can key on them; the text
+// `optionId` is used for bau_option_comments.option_id.
+const BAU_OPTIONS: ReadonlyArray<{
+  num: number;
+  optionId: string;
+  entryId: string;
+  text: string;
+  color: ParticipantColor;
 }> = [
-  { key: "must", label: "MUST BE TRUE",   dot: "#3B6D11", bg: "#EAF3DE" },
-  { key: "nice", label: "NICE TO HAVE",   dot: "#C97A0E", bg: "#FDF1DE" },
-  { key: "risk", label: "NOT YET · RISK", dot: "#A32D2D", bg: "#FCEBEB" },
+  {
+    num: 1,
+    optionId: "bau-option-1",
+    entryId: "ba00ba00-0000-4000-8000-000000000001",
+    text: "We continue as we are, workstream leads remain",
+    color: COLORS[0], // magenta
+  },
+  {
+    num: 2,
+    optionId: "bau-option-2",
+    entryId: "ba00ba00-0000-4000-8000-000000000002",
+    text: "Enablement workstreams close by December, embed enablement into ways of working and push for bolder",
+    color: COLORS[2], // cobalt
+  },
+  {
+    num: 3,
+    optionId: "bau-option-3",
+    entryId: "ba00ba00-0000-4000-8000-000000000003",
+    text: "CXT ramps down and a smaller team remains to push bolder",
+    color: COLORS[3], // amber
+  },
+  {
+    num: 4,
+    optionId: "bau-option-4",
+    entryId: "ba00ba00-0000-4000-8000-000000000004",
+    text: "Dissolve CXT completely and CXO owns bolder",
+    color: COLORS[4], // lavender
+  },
+  {
+    num: 5,
+    optionId: "bau-option-5",
+    entryId: "ba00ba00-0000-4000-8000-000000000005",
+    text: "Go bigger: Expand CXT to enterprise level under the chief transformation officer",
+    color: COLORS[1], // navy
+  },
 ];
 
 export default function BauPage() {
   const { session, currentParticipant, participants } = useSession();
-  const { criteria, loaded, updateCriteria } = useBauCriteria(session?.id ?? null);
   const { items: bauNotes } = useEntries<BauNote>("bau_notes", session?.id ?? null);
+  const { items: comments } = useEntries<BauOptionComment>(
+    "bau_option_comments",
+    session?.id ?? null,
+  );
+  const { reactions, toggleReaction } = useReactions(session?.id ?? null);
 
-  const [newCriterion, setNewCriterion] = useState("");
-  const draggedRef = useRef<{ text: string; from: BauColumn } | null>(null);
-  const [dragOver, setDragOver] = useState<BauColumn | null>(null);
+  const participantById = (id: string): Participant | null =>
+    participants.find((p) => p.id === id) ?? null;
 
-  if (!criteria || !loaded) {
-    return (
-      <main className="page-shell">
-        <div className="text-sm text-ink-faint">Loading BAU criteria…</div>
-      </main>
-    );
-  }
-
-  // --- drag/drop / click / delete / add ---
-
-  const moveItem = (text: string, from: BauColumn, to: BauColumn) => {
-    if (from === to) return;
-    const next: BauCriteriaShape = {
-      must: [...criteria.must],
-      nice: [...criteria.nice],
-      risk: [...criteria.risk],
-      tray: [...criteria.tray],
-    };
-    next[from] = next[from].filter((x) => x !== text);
-    if (!next[to].includes(text)) next[to].push(text);
-    updateCriteria(next);
-  };
-
-  const deleteItem = (text: string, from: BauColumn) => {
-    const next: BauCriteriaShape = {
-      must: [...criteria.must],
-      nice: [...criteria.nice],
-      risk: [...criteria.risk],
-      tray: [...criteria.tray],
-    };
-    next[from] = next[from].filter((x) => x !== text);
-    updateCriteria(next);
-  };
-
-  const addNewCriterion = () => {
-    const trimmed = newCriterion.trim();
-    if (!trimmed) return;
-    const all = [
-      ...criteria.must,
-      ...criteria.nice,
-      ...criteria.risk,
-      ...criteria.tray,
-    ];
-    if (all.includes(trimmed)) {
-      setNewCriterion("");
-      return;
-    }
-    updateCriteria({ ...criteria, tray: [...criteria.tray, trimmed] });
-    setNewCriterion("");
-  };
-
-  const onDragStart = (e: React.DragEvent, text: string, from: BauColumn) => {
-    draggedRef.current = { text, from };
-    e.dataTransfer.effectAllowed = "move";
-    try {
-      e.dataTransfer.setData("text/plain", text);
-    } catch {
-      // ignore — older browsers
-    }
-  };
-  const onDragEnd = () => {
-    draggedRef.current = null;
-    setDragOver(null);
-  };
-  const onDragOver = (e: React.DragEvent, to: BauColumn) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    if (dragOver !== to) setDragOver(to);
-  };
-  const onDragLeave = (to: BauColumn) => {
-    if (dragOver === to) setDragOver(null);
-  };
-  const onDrop = (e: React.DragEvent, to: BauColumn) => {
-    e.preventDefault();
-    setDragOver(null);
-    const d = draggedRef.current;
-    if (!d) return;
-    moveItem(d.text, d.from, to);
-    draggedRef.current = null;
-  };
-
-  // --- bau notes ---
   const submitBauNote = async (text: string) => {
     if (!session || !currentParticipant) return;
     const sb = getSupabase();
@@ -134,7 +104,7 @@ export default function BauPage() {
   };
 
   const notesForSection: Note[] = bauNotes.map((n) => {
-    const p = participants.find((x) => x.id === n.participant_id);
+    const p = participantById(n.participant_id);
     return {
       id: n.id,
       text: n.text,
@@ -156,8 +126,8 @@ export default function BauPage() {
         <Card accent={COLORS[4].hex} className="mb-6">
           <Eyebrow color={COLORS[4].hex}>THE QUESTION FOR THE ROOM</Eyebrow>
           <h2 className="text-2xl font-medium text-navy leading-tight">
-            What does it look like when a workstream has truly achieved its
-            goals — and is ready for BAU?
+            What is the role of CXT when a new organization (e.g., CXO) goes
+            live?
           </h2>
         </Card>
 
@@ -181,129 +151,40 @@ export default function BauPage() {
           </div>
         </div>
 
-        <Eyebrow color={COLORS[2].hex}>SORT THE CRITERIA</Eyebrow>
+        <Eyebrow color={COLORS[2].hex}>POSSIBLE FUTURE STATES</Eyebrow>
         <h3 className="text-lg font-medium text-navy mb-1.5">
-          Drag each criterion to the right column
+          Which direction makes sense?
         </h3>
         <p className="text-xs text-ink-faint mb-4">
-          Drag the pills from the tray below into a column. Click any sorted
-          item to send it back to the tray. Hover and click × to remove a
-          criterion.
+          React to the options below. Drop a comment with your perspective or
+          questions.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-          {COLUMN_DEFS.map((col) => (
-            <div
-              key={col.key}
-              onDragOver={(e) => onDragOver(e, col.key)}
-              onDragLeave={() => onDragLeave(col.key)}
-              onDrop={(e) => onDrop(e, col.key)}
-              className="rounded-2xl p-3.5 min-h-[200px] transition"
-              style={{
-                background: col.bg,
-                outline:
-                  dragOver === col.key
-                    ? `2px solid ${col.dot}`
-                    : "none",
-                outlineOffset: -2,
-              }}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <div
-                  className="w-1.5 h-1.5 rounded-full"
-                  style={{ background: col.dot }}
-                />
-                <div
-                  className="text-[11px] font-medium tracking-[1px]"
-                  style={{ color: col.dot }}
-                >
-                  {col.label}
-                </div>
-              </div>
-              {criteria[col.key].length === 0 ? (
-                <div className="text-center text-[11px] italic text-ink-ghost py-7">
-                  Drop here
-                </div>
-              ) : (
-                criteria[col.key].map((item) => (
-                  <CriterionPill
-                    key={item}
-                    text={item}
-                    from={col.key}
-                    onDragStart={onDragStart}
-                    onDragEnd={onDragEnd}
-                    onClick={() => moveItem(item, col.key, "tray")}
-                    onDelete={() => deleteItem(item, col.key)}
-                    clickHint="Click to send back to tray, or drag"
-                  />
-                ))
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Tray */}
-        <div
-          onDragOver={(e) => onDragOver(e, "tray")}
-          onDragLeave={() => onDragLeave("tray")}
-          onDrop={(e) => onDrop(e, "tray")}
-          className="rounded-2xl p-3.5 mb-4 transition"
-          style={{
-            background: "#FAFAF7",
-            outline: dragOver === "tray" ? "2px solid #888" : "none",
-            outlineOffset: -2,
-          }}
-        >
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-[10px] font-medium tracking-[1px] text-ink-faint">
-              CRITERIA TRAY · DRAG TO A COLUMN
-            </div>
-            <div className="text-[11px] text-ink-ghost">
-              {criteria.tray.length} in tray
-            </div>
-          </div>
-          <div className="mb-2.5 flex flex-wrap gap-1.5">
-            {criteria.tray.length === 0 ? (
-              <div className="text-[13px] italic text-ink-ghost p-1">
-                Tray empty — all criteria sorted.
-              </div>
-            ) : (
-              criteria.tray.map((item) => (
-                <CriterionPill
-                  key={item}
-                  text={item}
-                  from="tray"
-                  rounded
-                  onDragStart={onDragStart}
-                  onDragEnd={onDragEnd}
-                  onClick={null /* tray click is a no-op */}
-                  onDelete={() => deleteItem(item, "tray")}
-                  clickHint="Drag to a column"
-                />
-              ))
-            )}
-          </div>
-          <div className="flex gap-2 pt-2.5 border-t border-black/[0.08]">
-            <input
-              value={newCriterion}
-              onChange={(e) => setNewCriterion(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addNewCriterion();
+        <div className="flex flex-col gap-3 mb-7">
+          {BAU_OPTIONS.map((opt) => {
+            const optComments = comments.filter(
+              (c) => c.option_id === opt.optionId,
+            );
+            return (
+              <BauOptionTile
+                key={opt.optionId}
+                option={opt}
+                comments={optComments}
+                participantById={participantById}
+                reactions={reactions.get(opt.entryId) ?? null}
+                onToggle={(k: ReactionKind) =>
+                  toggleReaction(
+                    "bau_option",
+                    opt.entryId,
+                    currentParticipant?.id ?? null,
+                    k,
+                  )
                 }
-              }}
-              placeholder="+ add a new criterion..."
-              className="flex-1 px-3 py-1.5 rounded-full border border-black/[0.08] bg-white text-xs outline-none focus:border-navy"
-            />
-            <PillButton
-              variant="secondary"
-              onClick={addNewCriterion}
-              disabled={!newCriterion.trim()}
-            >
-              Add
-            </PillButton>
-          </div>
+                currentParticipantId={currentParticipant?.id ?? null}
+                sessionId={session?.id ?? null}
+              />
+            );
+          })}
         </div>
 
         <NotesSection
@@ -318,70 +199,134 @@ export default function BauPage() {
 }
 
 // ============================================================
-// CriterionPill — draggable item used in both columns and tray.
+// BauOptionTile — read-only option card with reactions + comments.
+// Comments are append-only (no edit, no delete) — same lock as
+// proud moments on Celebrate.
 // ============================================================
 
-function CriterionPill({
-  text,
-  from,
-  rounded = false,
-  onDragStart,
-  onDragEnd,
-  onClick,
-  onDelete,
-  clickHint,
+function BauOptionTile({
+  option,
+  comments,
+  participantById,
+  reactions,
+  onToggle,
+  currentParticipantId,
+  sessionId,
 }: {
-  text: string;
-  from: BauColumn;
-  rounded?: boolean; // true => pill-style (tray uses this)
-  onDragStart: (e: React.DragEvent, text: string, from: BauColumn) => void;
-  onDragEnd: () => void;
-  onClick: (() => void) | null;
-  onDelete: () => void;
-  clickHint: string;
+  option: {
+    num: number;
+    optionId: string;
+    entryId: string;
+    text: string;
+    color: ParticipantColor;
+  };
+  comments: BauOptionComment[];
+  participantById: (id: string) => Participant | null;
+  reactions: Partial<Record<ReactionKind, string[]>> | null;
+  onToggle: (kind: ReactionKind) => void;
+  currentParticipantId: string | null;
+  sessionId: string | null;
 }) {
-  const [hover, setHover] = useState(false);
-  const baseRounded = rounded ? "rounded-full" : "rounded-lg";
-  const baseDisplay = rounded ? "inline-flex" : "flex";
+  const [draft, setDraft] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const submitComment = async () => {
+    const text = draft.trim();
+    if (!text || !sessionId || !currentParticipantId || submitting) return;
+    setSubmitting(true);
+    const sb = getSupabase();
+    const { error } = await sb.from("bau_option_comments").insert({
+      session_id: sessionId,
+      participant_id: currentParticipantId,
+      option_id: option.optionId,
+      text,
+    });
+    if (error) console.error("[bau_option_comments insert]", error);
+    else setDraft("");
+    setSubmitting(false);
+  };
+
   return (
     <div
-      draggable
-      onDragStart={(e) => onDragStart(e, text, from)}
-      onDragEnd={onDragEnd}
-      onClick={(e) => {
-        // ignore clicks that originated on the × button
-        if ((e.target as HTMLElement).dataset.deleteBtn === "1") return;
-        onClick?.();
-      }}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      title={clickHint}
-      style={{
-        cursor: onClick ? "pointer" : "grab",
-        boxShadow: hover ? "0 2px 6px rgba(0,0,0,0.06)" : undefined,
-      }}
-      className={`${baseDisplay} ${baseRounded} items-center gap-2 bg-white px-3 py-1.5 text-xs border border-black/[0.08] mb-1.5 transition ${rounded ? "mr-1" : ""}`}
+      className="rounded-2xl p-4 flex gap-3"
+      style={{ background: option.color.tint, color: option.color.dark }}
     >
-      <span className="flex-1 break-words">{text}</span>
-      <button
-        type="button"
-        data-delete-btn="1"
-        aria-label="Remove criterion"
-        title="Remove criterion"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete();
-        }}
-        className="w-4 h-4 rounded-full flex items-center justify-center text-[14px] leading-none transition"
-        style={{
-          background: "transparent",
-          color: hover ? "#A32D2D" : "#bbb",
-          opacity: hover ? 1 : 0,
-          flexShrink: 0,
-        }}
+      <div
+        className="rounded-full flex items-center justify-center text-white font-medium text-[13px] shrink-0"
+        style={{ background: option.color.hex, width: 28, height: 28 }}
       >
-        ×
-      </button>
+        {option.num}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div
+          className="text-sm font-medium leading-snug"
+          style={{ color: option.color.dark }}
+        >
+          {option.text}
+        </div>
+
+        <ReactionBar
+          reactions={reactions}
+          currentParticipantId={currentParticipantId}
+          onToggle={onToggle}
+        />
+
+        {comments.length > 0 ? (
+          <div className="mt-3 flex flex-col gap-1.5">
+            {comments.map((c) => {
+              const author = participantById(c.participant_id);
+              const ac = colorForIdx(author?.color_idx ?? 0);
+              return (
+                <div
+                  key={c.id}
+                  className="flex gap-2 p-2 rounded-xl"
+                  style={{ background: "rgba(255,255,255,0.55)" }}
+                >
+                  <ParticipantBadge
+                    name={author?.name ?? "?"}
+                    colorIdx={author?.color_idx ?? 0}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div
+                      className="text-[11px] font-medium"
+                      style={{ color: ac.dark }}
+                    >
+                      {author?.name ?? "Unknown"}
+                    </div>
+                    <div
+                      className="text-[13px] whitespace-pre-wrap break-words"
+                      style={{ color: ac.dark }}
+                    >
+                      {c.text}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {currentParticipantId ? (
+          <div className="flex gap-2 mt-3">
+            <input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") submitComment();
+              }}
+              placeholder="Add a comment..."
+              className="flex-1 px-3 py-1.5 rounded-full bg-white text-xs outline-none border border-black/[0.08] focus:border-navy"
+            />
+            <PillButton
+              variant="secondary"
+              onClick={submitComment}
+              disabled={!draft.trim() || submitting}
+            >
+              Post
+            </PillButton>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -159,7 +159,7 @@ export default function OrgEvolutionPage() {
         <h1 className="text-[38px] font-medium leading-[1.1] text-navy mb-0.5">
           CX org evolution
         </h1>
-        <p className="text-xs text-ink-ghost mb-7">~ 15 min</p>
+        <p className="text-xs text-ink-ghost mb-7">~ 40 mins</p>
 
         <Card accent={COLORS[4].hex} className="mb-6">
           <Eyebrow color={COLORS[4].hex}>THE QUESTION</Eyebrow>

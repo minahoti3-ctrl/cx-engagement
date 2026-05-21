@@ -168,6 +168,22 @@ create table if not exists public.bau_notes (
 );
 create index if not exists bau_notes_session_idx on public.bau_notes(session_id);
 
+-- Comments on the 5 hardcoded future-state options shown on Page 4.
+-- option_id is a text slug ('bau-option-1' .. 'bau-option-5'); the
+-- text of each option lives in the page code, not the DB. Reactions on
+-- those same options reuse the `reactions` table with entry_type =
+-- 'bau_option' and 5 stable hardcoded UUIDs for entry_id.
+create table if not exists public.bau_option_comments (
+  id              uuid primary key default gen_random_uuid(),
+  session_id      uuid not null references public.sessions(id) on delete cascade,
+  participant_id  uuid not null references public.participants(id) on delete cascade,
+  option_id       text not null,
+  text            text not null,
+  created_at      timestamptz not null default now()
+);
+create index if not exists bau_option_comments_session_option_idx
+  on public.bau_option_comments(session_id, option_id);
+
 -- =====================================================================
 -- Page 5 — Org evolution (timeline pins + notes)
 -- =====================================================================
@@ -258,7 +274,7 @@ create table if not exists public.reactions (
   session_id      uuid not null references public.sessions(id) on delete cascade,
   entry_type      text not null check (entry_type in (
                     'proud_moment','success_def','retro_card',
-                    'commitment','org_pin','bolder_trigger'
+                    'commitment','org_pin','bolder_trigger','bau_option'
                   )),
   entry_id        uuid not null,
   participant_id  uuid not null references public.participants(id) on delete cascade,
@@ -294,11 +310,12 @@ alter table public.reactions replica identity full;
 --   - bolder_triggers: no UPDATE in spec, included for consistency
 -- Most are not strictly required (client state keys by the PK), but
 -- cheap belt-and-braces for any future refactor.
-alter table public.commitments       replica identity full;
-alter table public.bau_criteria      replica identity full;
-alter table public.readiness_signals replica identity full;
-alter table public.org_pins          replica identity full;
-alter table public.bolder_triggers   replica identity full;
+alter table public.commitments          replica identity full;
+alter table public.bau_criteria         replica identity full;
+alter table public.bau_option_comments  replica identity full;
+alter table public.readiness_signals    replica identity full;
+alter table public.org_pins             replica identity full;
+alter table public.bolder_triggers      replica identity full;
 
 -- =====================================================================
 -- Row Level Security
@@ -319,7 +336,7 @@ begin
     'proud_moments','success_defs',
     'health_submissions','retro_cards',
     'commitments',
-    'bau_criteria','bau_notes',
+    'bau_criteria','bau_notes','bau_option_comments',
     'org_pins','org_notes',
     'readiness_signals','bolder_triggers','bolder_notes',
     'final_reflections',
@@ -359,7 +376,7 @@ begin
     'proud_moments','success_defs',
     'health_submissions','retro_cards',
     'commitments',
-    'bau_criteria','bau_notes',
+    'bau_criteria','bau_notes','bau_option_comments',
     'org_pins','org_notes',
     'readiness_signals','bolder_triggers','bolder_notes',
     'final_reflections',

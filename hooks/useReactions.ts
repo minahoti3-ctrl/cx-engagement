@@ -16,7 +16,8 @@ export type EntryType =
   | "retro_card"
   | "commitment"
   | "org_pin"
-  | "bolder_trigger";
+  | "bolder_trigger"
+  | "bau_option";
 
 type ReactionRow = {
   id: string;
