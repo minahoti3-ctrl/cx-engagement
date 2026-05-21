@@ -14,7 +14,7 @@ import { useReactions, type ReactionKind } from "@/hooks/useReactions";
 import { COLORS, colorForIdx } from "@/lib/colors";
 import { getSupabase } from "@/lib/supabase";
 
-type MonthKey = "jul" | "aug" | "sep" | "oct" | "nov";
+type MonthKey = "jul" | "aug" | "sep" | "oct" | "nov" | "dec" | "jan";
 
 type OrgPin = {
   id: string;
@@ -42,11 +42,13 @@ const MONTHS: ReadonlyArray<{
   color: string;
   filled: boolean;
 }> = [
-  { key: "jul", label: "July",              sub: "Messy by design", color: COLORS[3].hex, filled: true  },
-  { key: "aug", label: "August",            sub: "",                color: "#999",        filled: false },
-  { key: "sep", label: "September",         sub: "",                color: "#999",        filled: false },
-  { key: "oct", label: "October",           sub: "Must be stable",  color: COLORS[1].hex, filled: true  },
-  { key: "nov", label: "November & beyond", sub: "The horizon",     color: COLORS[4].hex, filled: true  },
+  { key: "jul", label: "Jul 2026", sub: "Messy by design", color: COLORS[3].hex, filled: true  },
+  { key: "aug", label: "Aug 2026", sub: "",                color: "#999",        filled: false },
+  { key: "sep", label: "Sep 2026", sub: "",                color: "#999",        filled: false },
+  { key: "oct", label: "Oct 2026", sub: "Must be stable",  color: COLORS[1].hex, filled: true  },
+  { key: "nov", label: "Nov 2026", sub: "",                color: "#999",        filled: false },
+  { key: "dec", label: "Dec 2026", sub: "",                color: "#999",        filled: false },
+  { key: "jan", label: "Jan 2027", sub: "The horizon",     color: COLORS[4].hex, filled: true  },
 ];
 
 export default function OrgEvolutionPage() {
@@ -198,7 +200,7 @@ export default function OrgEvolutionPage() {
 
           <div
             className="grid relative gap-2.5"
-            style={{ gridTemplateColumns: "repeat(5, 1fr)" }}
+            style={{ gridTemplateColumns: "repeat(7, 1fr)" }}
           >
             {/* connector line behind the dots */}
             <div

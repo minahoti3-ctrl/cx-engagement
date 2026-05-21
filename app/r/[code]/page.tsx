@@ -62,7 +62,7 @@ export default function WelcomePage() {
           className="inline-block px-3.5 py-1.5 rounded-full text-xs font-medium text-white mb-4"
           style={{ background: COLORS[0].hex }}
         >
-          Leadership session · 6-month reflection
+          Leadership session · 7-month reflection
         </div>
         <h1 className="text-[38px] font-medium leading-[1.1] text-navy mb-5 max-w-[720px]">
           Welcome!{" "}
@@ -76,7 +76,7 @@ export default function WelcomePage() {
         </h1>
         <p className="text-[15px] text-ink-mute leading-relaxed max-w-[560px] mb-8">
           Today we&apos;re taking stock of where the CX Transformation stands at the
-          6-month mark. Move through the pages at your own pace — your
+          7-month mark. Move through the pages at your own pace — your
           contributions appear live for everyone in the room.
         </p>
 
@@ -88,7 +88,7 @@ export default function WelcomePage() {
             className="text-[15px] leading-relaxed"
             style={{ color: COLORS[1].dark }}
           >
-            Take a meaningful pause at the 6-month mark to honestly assess where
+            Take a meaningful pause at the 7-month mark to honestly assess where
             the CX Transformation stands — with a focus on impact over activity,
             program health, and direction. Leave with clear alignment on where
             we&apos;re going and what needs to change.

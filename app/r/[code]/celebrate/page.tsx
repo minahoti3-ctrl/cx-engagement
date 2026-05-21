@@ -100,7 +100,7 @@ export default function CelebratePage() {
             }}
           />
           <h1 className="text-[36px] font-medium text-white relative">
-            We&apos;re 6 months in! 🎉
+            We&apos;re 7 months in! 🎉
           </h1>
         </Banner>
 
@@ -136,7 +136,7 @@ export default function CelebratePage() {
         <Card className="mb-10">
           <Eyebrow color={COLORS[3].hex}>QUESTION FOR THE ROOM</Eyebrow>
           <h3 className="text-lg font-medium text-navy mb-4">
-            What are you most proud of from the last 6 months? What&apos;s a moment
+            What are you most proud of from the last 7 months? What&apos;s a moment
             that was meaningful to you?
           </h3>
 
@@ -260,7 +260,7 @@ export default function CelebratePage() {
                 impact
               </em>{" "}
               we set out to achieve, or just{" "}
-              <em className="not-italic" style={{ color: COLORS[0].hex }}>
+              <em className="not-italic" style={{ color: COLORS[3].hex }}>
                 activity
               </em>
               ?

@@ -24,7 +24,7 @@ export function PageNav({ code }: { code: string }) {
           href={pageHref(code, "")}
           className="font-medium text-[15px] text-navy whitespace-nowrap hover:opacity-80"
         >
-          CX · 6 months in <span aria-hidden>👋</span>
+          CX · 7 months in <span aria-hidden>👋</span>
         </Link>
 
         <div className="flex-1 flex items-center justify-center gap-1 overflow-x-auto">

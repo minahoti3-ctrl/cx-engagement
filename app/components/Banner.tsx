@@ -8,7 +8,7 @@ type Props = {
   children: ReactNode;
 };
 
-// The big rounded hero band used on Celebrate (6 months in!) and Close
+// The big rounded hero band used on Celebrate (7 months in!) and Close
 // (Thank you for driving the CX transformation!). Self-clipped so decorative
 // shapes positioned inside don't bleed out.
 export function Banner({

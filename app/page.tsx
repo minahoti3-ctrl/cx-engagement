@@ -42,7 +42,7 @@ export default function JoinPage() {
           className="inline-block px-3.5 py-1.5 rounded-full text-xs font-medium text-white mb-4"
           style={{ background: "var(--color-magenta)" }}
         >
-          Leadership session · 6-month reflection
+          Leadership session · 7-month reflection
         </div>
         <h1 className="text-[38px] font-medium leading-[1.1] mb-3 text-navy">
           Welcome.{" "}

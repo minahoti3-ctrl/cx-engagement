@@ -177,7 +177,7 @@ create table if not exists public.org_pins (
   session_id      uuid not null references public.sessions(id) on delete cascade,
   participant_id  uuid not null references public.participants(id) on delete cascade,
   text            text not null,
-  month           text check (month is null or month in ('jul','aug','sep','oct','nov')),
+  month           text check (month is null or month in ('jul','aug','sep','oct','nov','dec','jan')),
   created_at      timestamptz not null default now()
 );
 create index if not exists org_pins_session_idx on public.org_pins(session_id);
