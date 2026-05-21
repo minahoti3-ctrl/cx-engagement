@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Card } from "@/app/components/Card";
 import { Eyebrow } from "@/app/components/Eyebrow";
 import { ParticipantBadge } from "@/app/components/ParticipantBadge";
+import { PauseCard } from "@/app/components/PauseCard";
 import { PillButton } from "@/app/components/PillButton";
 import { ReactionBar } from "@/app/components/ReactionBar";
 import { ShapesBg } from "@/app/components/ShapesBg";
@@ -171,6 +172,15 @@ export default function CommitmentsPage() {
             />
           ))}
         </div>
+
+        <PauseCard
+          emoji="🥘"
+          title="Mid-session potluck"
+          body="If we had a CXT potluck tomorrow, what dish are you bringing? Be specific — and tell us why."
+          footer="Take 5 minutes. Go round."
+          bgColor={COLORS[2].tint}
+          textColor={COLORS[2].dark}
+        />
       </div>
     </main>
   );

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { BirthdayPresent } from "@/app/components/BirthdayPresent";
 import { Card } from "@/app/components/Card";
 import { Eyebrow } from "@/app/components/Eyebrow";
+import { PauseCard } from "@/app/components/PauseCard";
 import { PillButton } from "@/app/components/PillButton";
 import { ShapesBg } from "@/app/components/ShapesBg";
 import { useSession } from "@/app/components/SessionProvider";
@@ -178,6 +179,15 @@ export default function WelcomePage() {
             </Link>
           </div>
         ) : null}
+
+        <PauseCard
+          emoji="🎂"
+          title="Quick warm-up before we dig in"
+          body="Go round the room: what was your best birthday, and why?"
+          footer="Take 5 minutes."
+          bgColor={COLORS[3].tint}
+          textColor={COLORS[3].dark}
+        />
       </div>
       <BirthdayPresent />
     </main>

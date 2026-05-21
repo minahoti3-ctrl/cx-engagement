@@ -5,6 +5,7 @@ import { Card } from "@/app/components/Card";
 import { Eyebrow } from "@/app/components/Eyebrow";
 import { NotesSection, type Note } from "@/app/components/NotesSection";
 import { ParticipantBadge } from "@/app/components/ParticipantBadge";
+import { PauseCard } from "@/app/components/PauseCard";
 import { PillButton } from "@/app/components/PillButton";
 import { ReactionBar } from "@/app/components/ReactionBar";
 import { ShapesBg } from "@/app/components/ShapesBg";
@@ -406,6 +407,41 @@ export default function OrgEvolutionPage() {
           currentParticipantColorIdx={currentParticipant?.color_idx ?? null}
           onSubmit={submitOrgNote}
           placeholder="Decisions, open questions, what needs to be true..."
+        />
+
+        <PauseCard
+          emoji="🏃"
+          title="Move it before the home stretch"
+          body={
+            <>
+              <div style={{ marginBottom: 10 }}>Pick one:</div>
+              <ul
+                style={{
+                  listStyle: "none",
+                  padding: 0,
+                  margin: 0,
+                  textAlign: "left",
+                  display: "inline-block",
+                }}
+              >
+                <li style={{ marginBottom: 6 }}>
+                  🧘 Stand up, stretch your arms above your head, hold for 10
+                  seconds. Repeat 3 times.
+                </li>
+                <li style={{ marginBottom: 6 }}>
+                  🚶 Walk to the window or door and back. Look at something
+                  more than 20 feet away.
+                </li>
+                <li style={{ marginBottom: 6 }}>
+                  💃 Put on a 90-second song. Move however feels good.
+                </li>
+                <li>💧 Refill your water. Drink it on the way back.</li>
+              </ul>
+            </>
+          }
+          footer="Take 3 minutes. We finish strong after this."
+          bgColor={COLORS[4].tint}
+          textColor={COLORS[4].dark}
         />
       </div>
     </main>
