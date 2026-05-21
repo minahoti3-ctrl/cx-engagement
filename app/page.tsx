@@ -52,7 +52,7 @@ export default function JoinPage() {
           >
             Let&apos;s spend a day
           </span>{" "}
-          actually talking.
+          reflecting.
         </h1>
         <p className="text-[15px] text-ink-mute leading-relaxed mb-8 max-w-md">
           Enter the room code your facilitator shared, plus your name. You&apos;ll be
